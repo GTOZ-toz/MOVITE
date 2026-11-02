@@ -9,7 +9,7 @@ jobs:
   aggiorna:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Scarica GTFS
         run: |
           curl -fsSL -o actv_aut.zip https://actv.avmspa.it/sites/default/files/attachments/opendata/automobilistico/actv_aut.zip
