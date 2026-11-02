@@ -45,6 +45,22 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .empty{color:var(--muted);font-size:14px;line-height:1.5;padding-top:12px}
 .res{display:grid}
 .trip{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding-block:14px;border-bottom:1px solid var(--line)}
+#detail{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
+#detail .ph{background:var(--blue);color:#fff;display:flex;align-items:center;gap:12px;height:60px;font-size:20px;letter-spacing:1px;text-transform:uppercase;padding-left:max(8px,env(safe-area-inset-left,0px));position:sticky;top:0;z-index:1}
+.dwrap{max-width:560px;margin:0 auto;display:grid;gap:14px;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+#dSum .tt{font-size:28px}
+.leg{display:grid;gap:10px;padding-block:6px}
+.lh{display:flex;gap:12px;align-items:center;line-height:1.4}
+.stops{list-style:none;margin:0;padding:0 0 0 22px;border-left:3px solid var(--line);margin-left:22px;display:grid;gap:8px}
+.stops li{display:flex;gap:12px;font-size:15px;position:relative;line-height:1.35}
+.stops li::before{content:"";position:absolute;left:-30px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--card);border:2.5px solid var(--muted)}
+.stops li.end{font-weight:600}.stops li.end::before{border-color:var(--blue);background:var(--blue)}
+.stops li.mid2{color:var(--muted)}
+.st{font-variant-numeric:tabular-nums;min-width:3.2em}
+.pt{display:inline-block;font-size:12px;font-weight:500;color:var(--blue);border:1.5px solid var(--blue);border-radius:6px;padding:0 6px;margin-left:4px}
+.xfer{display:flex;gap:12px;align-items:flex-start;background:var(--beta);border:1.5px solid var(--betab);border-radius:14px;padding:12px 14px;margin-block:12px;font-size:14px;line-height:1.45}
+.ln.lt{color:#123;box-shadow:inset 0 0 0 1.5px #c9d2da}
+.trip{cursor:pointer}
 .lns{display:flex;flex-direction:column;gap:4px}.ln.nav{border-radius:50px}.md{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0;white-space:nowrap}
 .trip:last-child{border-bottom:0}
 .ln{min-width:48px;text-align:center;border-radius:10px;padding:7px 8px;font-weight:600;color:#fff;background:var(--blue)}
@@ -100,6 +116,10 @@ main{padding-block:20px 40px;display:grid;gap:16px}
   <p class="status" id="status"></p>
 </main>
 
+<div id="detail" hidden>
+  <div class="ph"><button class="ibtn" id="dBack" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Dettaglio viaggio</span></div>
+  <div class="dwrap"><div class="card" id="dSum"></div><div class="card" id="dBody"></div></div>
+</div>
 <div id="picker" hidden>
   <div class="ph"><button class="ibtn" id="pBack" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span id="pTitle">Partenza</span></div>
   <div class="pbody"><nav class="az" id="az"></nav>
@@ -118,8 +138,8 @@ const ymd=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.get
 const norm=(n,m)=>{n=n.replace(/"/g,'').replace(/\s+/g,' ').trim();if(m=='n')n=n.replace(/ [A-H]$/,'');return /^P\.le Roma\b/.test(n)||n=='VENEZIA'||n=='VENEZIA CORSIA C'?'Piazzale Roma':n};
 const PM="Liberta' Porto Marghera",FS=[PM,'Piazzale Roma','Rialto'],FR=[[PM,'Piazzale Roma'],['Piazzale Roma',PM]];
 function build(srcs){const trips=[],byName=new Map(),modes=new Map(),acts=[];let end='99999999';
-  for(const [c,m] of srcs){const nm=c.names.map(x=>norm(x,m)),pn=c.pats.map(([ns])=>ns.map(i=>nm[i]));if(c.end&&c.end<end)end=c.end;
-    c.trips.forEach(([r,h,s,p,t0])=>{const ti=trips.length,off=c.pats[p][1];trips.push([c.routes[r][0],norm(c.hs[h],m),m+c.svc[s],c.routes[r][1],m,pn[p],off,t0]);
+  for(const [c,m] of srcs){const nm=c.names.map(x=>norm(x,m)),pn=c.pats.map(([ns])=>ns.map(i=>nm[i])),pr=c.pats.map(([ns])=>ns.map(i=>c.names[i]));if(c.end&&c.end<end)end=c.end;
+    c.trips.forEach(([r,h,s,p,t0])=>{const ti=trips.length,off=c.pats[p][1];trips.push([c.routes[r][0],norm(c.hs[h],m),m+c.svc[s],c.routes[r][1],m,pn[p],off,t0,pr[p]]);
       pn[p].forEach((k,i)=>{let a=byName.get(k);if(!a){byName.set(k,a=[]);modes.set(k,new Set())}a.push([ti,i,(t0+off[i])*60]);modes.get(k).add(m)})});
     const ex={};for(const [id,d,t] of c.ex)(ex[d]??=[]).push([id,t]);
     acts.push(ds=>{const w=new Date(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6)).getDay(),s=new Set();for(const [id,a,b,mm] of c.cal)if(ds>=a&&ds<=b&&mm[w]=='1')s.add(id);for(const [id,t] of ex[ds]||[])t=='1'?s.add(id):s.delete(id);return [...s].map(x=>m+x)})}
@@ -162,7 +182,7 @@ function plan(A,B,t0,act){
   for(const [ti,i,t] of firsts){let best=null;const ns=T[ti][5];
     for(let k=i+1;k<ns.length;k++){const X=ns[k];if(X==B)break;if(X==A)continue;const ta=tt(ti,k),E=D.byName.get(X);
       let lo=0,hi=E.length;while(lo<hi){const md=lo+hi>>1;E[md][2]<ta+180?lo=md+1:hi=md}
-      for(let j=lo,n=0;j<E.length&&n<300;j++,n++){const [t2,s2,d2]=E[j];if(t2==ti||!act.has(T[t2][2]))continue;if(T[t2][4]!=T[ti][4]&&d2<ta+300)continue;if(best&&d2>=best[1][4])break;const r=reach(t2,s2);if(r){if(!best||r[1]<best[1][4])best=[[ti,i,k,t,ta],[t2,s2,r[0],d2,r[1]]];break}}}
+      for(let j=lo,n=0;j<E.length&&n<300;j++,n++){const [t2,s2,d2]=E[j];if(t2==ti||!act.has(T[t2][2]))continue;if(T[t2][4]!=T[ti][4]&&d2<ta+240)continue;if(best&&d2>=best[1][4])break;const r=reach(t2,s2);if(r){if(!best||r[1]<best[1][4])best=[[ti,i,k,t,ta],[t2,s2,r[0],d2,r[1]]];break}}}
     if(best)opts.push(best)}
   opts.sort((x,y)=>y[0][3]-x[0][3]||x.length-y.length);let m=Infinity;const keep=[];
   for(const o of opts){const ar=o[o.length-1][4];if(ar<m){keep.push(o);m=ar}}
@@ -175,13 +195,28 @@ function search(){
   const [h,m]=($('when').value||'00:00').split(':');const list=plan(st.from,st.to,h*3600+m*60,D.active(ymd(new Date())));
   if(!list.length){$('res').innerHTML='<p class="empty">Nessuna soluzione con al massimo un cambio per il resto della giornata.</p>';return}
   const now=new Date(),nowS=now.getHours()*3600+now.getMinutes()*60,T=D.trips;
-  const badge=ti=>`<span class="ln${T[ti][4]=='n'?' nav':''}" style="background:${T[ti][3]}">${esc(T[ti][0])}</span>`;
+  const badge=ti=>lnBadge(ti);
   $('res').innerHTML=list.slice(0,st.limit).map(o=>{const f=o[0],l=o[o.length-1],w=Math.round((f[3]-nowS)/60);
     const sub=o.length==1?`dir. ${esc(T[f[0]][1])}`:`cambio a ${esc(T[f[0]][5][f[2]])} · ${hm(f[4])} → ${hm(o[1][3])}`;
-    return `<div class="trip"><div class="lns">${o.map(x=>badge(x[0])).join('')}</div><div class="mid"><div class="tt">${hm(f[3])} <small>→ ${hm(l[4])} · ${Math.round((l[4]-f[3])/60)} min</small></div><div class="hs">${sub}</div></div><div class="wait">${w>=0&&w<120?(w==0?'ora':'tra '+w+'′'):''}</div></div>`}).join('')+
+    return `<div class="trip" role="button" tabindex="0" data-o="${list.indexOf(o)}"><div class="lns">${o.map(x=>badge(x[0])).join('')}</div><div class="mid"><div class="tt">${hm(f[3])} <small>→ ${hm(l[4])} · ${Math.round((l[4]-f[3])/60)} min</small></div><div class="hs">${sub}</div></div><div class="wait">${w>=0&&w<120?(w==0?'ora':'tra '+w+'′'):''}</div></div>`}).join('')+
     (list.length>st.limit?`<button class="more" id="more">Mostra altri ${list.length-st.limit}</button>`:'');
-  const mb=$('more');if(mb)mb.onclick=()=>{st.limit+=20;search()};
+  st.list=list;const mb=$('more');if(mb)mb.onclick=()=>{st.limit+=20;search()};
 }
+const light=c=>{const n=parseInt(c.slice(1),16);return (0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))>170};
+function lnBadge(ti){const T=D.trips[ti],c=T[3];return `<span class="ln${T[4]=='n'?' nav':''}${light(c)?' lt':''}" style="background:${c}">${esc(T[0])}</span>`}
+function where(ti,i){const T=D.trips[ti],n=T[5][i],r=T[8][i],p=T[4]=='n'&&r.match(/"?\s?([A-H])"?$/);return esc(n)+(p?` <span class="pt">pontile ${p[1]}</span>`:'')}
+function showDetail(o){
+  const T=D.trips;let h='';
+  o.forEach((x,k)=>{const [ti,a,b,d,ar]=x,t=T[ti],mode=t[4]=='n'?'Battello':'Bus';
+    if(k){const p=o[k-1],w=Math.round((d-p[4])/60);h+=`<div class="xfer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><div><b>Cambio a ${esc(t[5][a])}</b><br>${w} min per il cambio · scendi alle ${hm(p[4])}, riparti alle ${hm(d)}</div></div>`}
+    const stops=[];for(let i=a;i<=b;i++)stops.push([i,(t[7]+t[6][i])*60]);
+    h+=`<div class="leg"><div class="lh">${lnBadge(ti)}<div><b>${mode} ${esc(t[0])}</b><br><span class="hs">direzione ${esc(t[1])} · ${b-a} fermate · ${Math.round((ar-d)/60)} min</span></div></div>
+      <ol class="stops">${stops.map(([i,s],j)=>`<li class="${j==0||j==stops.length-1?'end':'mid2'}"><span class="st">${hm(s)}</span><span>${where(ti,i)}</span></li>`).join('')}</ol></div>`});
+  const f=o[0],l=o[o.length-1];
+  $('dSum').innerHTML=`<div class="tt">${hm(f[3])} → ${hm(l[4])}</div><div class="hs">${Math.round((l[4]-f[3])/60)} min in tutto · ${o.length==1?'diretto':(o.length-1)+' cambio'}</div>`;
+  $('dBody').innerHTML=h;$('detail').hidden=false;$('detail').scrollTop=0}
+$('res').onclick=e=>{const r=e.target.closest('.trip');if(r&&st.list)showDetail(st.list[+r.dataset.o])};
+$('res').onkeydown=e=>{if(e.key=='Enter'&&e.target.classList.contains('trip'))e.target.click()};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- UI ---------- */
@@ -219,7 +254,7 @@ $('when').onchange=()=>{st.limit=12;search()};
 $('favBtn').onclick=()=>{if(!st.from||!st.to)return;let f=S.get('favR',FR);if(!f.some(x=>x[0]==st.from&&x[1]==st.to))f.unshift([st.from,st.to]);S.set('favR',f);render()};
 $('loadBtn').onclick=()=>$('file').click();
 $('file').onchange=async e=>{const fl=e.target.files[0];if(!fl)return;try{D=await parseZip(fl);await idb(1,fl);status('');render()}catch(err){status('Il file non sembra un GTFS valido: scegli lo zip "automobilistico" scaricato dagli open data ACTV.')}};
-document.addEventListener('keydown',e=>{if(e.key=='Escape')$('picker').hidden=true});
+document.addEventListener('keydown',e=>{if(e.key=='Escape'){$('picker').hidden=true;$('detail').hidden=true}});$('dBack').onclick=()=>$('detail').hidden=true;
 
 (async()=>{const n=new Date();$('when').value=hm(n.getHours()*3600+n.getMinutes()*60);
   try{const j=await (await fetch('data.json',{cache:'no-cache'})).json();D=build([[j.aut,'b'],[j.nav,'n']])}catch(e){status('Impossibile caricare gli orari. Controlla la connessione e riapri l\'app.');return}{const fs=S.get('favS',null);if(fs&&!S.get('m1',0)){if(!fs.includes('Rialto'))S.set('favS',[...fs,'Rialto']);S.set('m1',1)}}if(!st.from||!D.byName.has(st.from)||!D.byName.has(st.to)){st.from=PM;st.to='Piazzale Roma'}render();
