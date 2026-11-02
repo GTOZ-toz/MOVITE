@@ -1,0 +1,25 @@
+name: Aggiorna orari ACTV
+on:
+  schedule:
+    - cron: '17 3 * * *'   # ogni notte alle 3:17 UTC
+  workflow_dispatch:        # avvio manuale dal tab Actions
+permissions:
+  contents: write
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scarica GTFS
+        run: |
+          curl -fsSL -o actv_aut.zip https://actv.avmspa.it/sites/default/files/attachments/opendata/automobilistico/actv_aut.zip
+          curl -fsSL -o actv_nav.zip https://actv.avmspa.it/sites/default/files/attachments/opendata/navigazione/actv_nav.zip
+      - name: Genera data.json
+        run: python3 scripts/build_data.py actv_aut.zip actv_nav.zip data.json
+      - name: Salva se cambiato
+        run: |
+          git config user.name "movite-bot"
+          git config user.email "movite-bot@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "Orari ACTV aggiornati $(date +%F)"
+          git push
