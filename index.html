@@ -42,6 +42,7 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .fav:last-child{border-bottom:0}
 .rt{display:inline-block;font-size:12px;font-weight:600;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;letter-spacing:0}.rt.late{background:#fde3c8;color:#8a3b00}.rt.early{background:#dff0ff;color:#0b4f80}.rt.ok{background:#dcf3e3;color:#1d6b38}.rt.x{background:#c80815;color:#fff}.rtt{color:#b34700}.st s{color:var(--muted);font-weight:400}.rton{color:#1d6b38;font-weight:500}.rtoff{color:var(--muted)}
 .xfer.risk{background:#fde7e8;border-color:#c80815}
+.sp{width:44px;height:44px}.ch #resTitle{flex:1;min-width:0}.save{display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--blue);color:var(--blue);border-radius:20px;padding:6px 12px;font:inherit;font-size:13px;letter-spacing:.5px;text-transform:none;cursor:pointer;flex-shrink:0}.save.on{background:var(--blue);color:#fff}.save.on svg{fill:currentColor}.fav{position:relative}.rm{position:absolute;right:0;top:12px;background:none;border:0;color:var(--muted);font-size:22px;line-height:1;padding:6px 8px;cursor:pointer;border-radius:8px}.fav:first-child{padding-top:0}.fav:first-child .rm{top:-2px}
 .nxs{display:grid;gap:6px;margin-top:4px}.nx{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;background:var(--bg);border-radius:12px;padding:6px 10px}.nxl{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}.nxl .ln{min-width:38px;padding:4px 6px;font-size:13px}.pl{color:var(--muted);font-size:12px}.nxt{font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}.nxw{color:var(--blue);font-weight:500;font-size:14px;min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums}
 .beta.warn{background:#fff1e0;border-color:#f0a24a}.beta.bad{background:#fde7e8;border-color:#c80815;color:#7a0710}
 .fav .a{display:flex;gap:12px;align-items:center;color:var(--blue);font-weight:600;text-transform:uppercase}
@@ -49,8 +50,8 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .empty{color:var(--muted);font-size:14px;line-height:1.5;padding-top:12px}
 .res{display:grid}
 .trip{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding-block:14px;border-bottom:1px solid var(--line)}
-#detail{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
-#detail .ph{background:var(--blue);color:#fff;display:flex;align-items:center;gap:12px;height:60px;font-size:20px;letter-spacing:1px;text-transform:uppercase;padding-left:max(8px,env(safe-area-inset-left,0px));position:sticky;top:0;z-index:1}
+#favScr,#detail{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
+#favScr .ph,#detail .ph{background:var(--blue);color:#fff;display:flex;align-items:center;gap:12px;height:60px;font-size:20px;letter-spacing:1px;text-transform:uppercase;padding-left:max(8px,env(safe-area-inset-left,0px));position:sticky;top:0;z-index:1}
 .dwrap{max-width:560px;margin:0 auto;display:grid;gap:14px;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
 #dSum .tt{font-size:28px}
 .leg{display:grid;gap:10px;padding-block:6px}
@@ -98,9 +99,9 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 </head>
 <body>
 <header><div class="wrap">
-  <div class="bar"><span class="ibtn" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span>
+  <div class="bar"><span class="ibtn sp" aria-hidden="true"></span>
   <span class="logo"><img src="icon-64.png" alt="" width="34" height="34">MOVITE</span>
-  <button class="ibtn" id="favBtn" title="Salva nei preferiti" aria-label="Salva percorso nei preferiti"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg></button></div>
+  <button class="ibtn" id="favBtn" title="Percorsi preferiti" aria-label="Apri i percorsi preferiti"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg></button></div>
   <div class="fields">
     <div class="swap">
     <button class="field" id="fFrom"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><span>Partenza</span></button>
@@ -115,11 +116,14 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 
 <main class="wrap">
   <div class="beta" id="dataBox"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6L4 20h16L14 9V3"/></svg><div id="dataTxt"><b>Dati di esempio.</b> Carica il GTFS bus ACTV per gli orari reali.</div><button class="act" id="loadBtn" hidden>Carica</button><input type="file" id="file" accept=".zip" hidden></div>
-  <section class="card"><div class="ch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg>I tuoi percorsi preferiti</div><div id="favs"></div></section>
-  <section class="card" id="resCard" hidden><div class="ch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l1-3M16 21l-1-3"/></svg><span id="resTitle">Prossimi bus</span></div><div class="res" id="res"></div></section>
+  <section class="card" id="resCard" hidden><div class="ch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l1-3M16 21l-1-3"/></svg><span id="resTitle">Prossimi bus</span><button class="save" id="saveBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg><span>Salva</span></button></div><div class="res" id="res"></div></section>
   <p class="status" id="status"></p>
 </main>
 
+<div id="favScr" class="scr" hidden>
+  <div class="ph"><button class="ibtn" id="fBack" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Percorsi preferiti</span></div>
+  <div class="dwrap"><div class="card"><div id="favs"></div></div><p class="status">Per aggiungere un percorso, cercalo nella home e tocca <b>Salva</b>.</p></div>
+</div>
 <div id="detail" hidden>
   <div class="ph"><button class="ibtn" id="dBack" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Dettaglio viaggio</span></div>
   <div class="dwrap"><div class="card" id="dSum"></div><div class="card" id="dBody"></div></div>
@@ -255,8 +259,8 @@ function drawFavs(){
   const favs=S.get('favR',FR),d=new Date(),nowS=d.getHours()*3600+d.getMinutes()*60;
   $('favs').innerHTML=favs.length?favs.map((f,i)=>{const nx=nextOf(f[0],f[1],3);
     const chips=nx.length?nx.map(o=>{const dl=rtD(o[0][0],o[0][1],o[0][3]),w=Math.round((eff(o[0][3],dl)-nowS)/60);return `<div class="nx"><span class="nxl">${o.map(x=>lnBadge(x[0])).join('<span class="pl">+</span>')}</span><span class="nxt">${hm(o[0][3])}${rtTag(dl)}</span><span class="nxw">${w<=0?'ora':w<60?'tra '+w+'′':'→ '+hm(o[o.length-1][4])}</span></div>`}).join(''):'<p class="empty">Nessuna corsa per il resto della giornata.</p>';
-    return `<div class="fav" data-i="${i}" role="button" tabindex="0"><div class="a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>${esc(dn(f[0]))}</div><div class="a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6"/></svg><span class="chip">${esc(dn(f[1]))}</span></div><div class="nxs">${chips}</div></div>`}).join(''):'<p class="empty">Scegli partenza e arrivo, poi tocca il cuore in alto per salvare il percorso.</p>';
-  document.querySelectorAll('.fav').forEach(el=>{el.onclick=()=>{const f=favs[el.dataset.i];st.from=f[0];st.to=f[1];save();render();$('resCard').scrollIntoView({behavior:'smooth',block:'start'})};el.onkeydown=e=>{if(e.key=='Enter')el.click()}});
+    return `<div class="fav" data-i="${i}" role="button" tabindex="0"><button class="rm" aria-label="Rimuovi dai preferiti" title="Rimuovi">×</button><div class="a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>${esc(dn(f[0]))}</div><div class="a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6"/></svg><span class="chip">${esc(dn(f[1]))}</span></div><div class="nxs">${chips}</div></div>`}).join(''):'<p class="empty">Nessun percorso salvato.</p>';
+  document.querySelectorAll('.fav').forEach(el=>{el.onclick=e=>{const f=favs[el.dataset.i];if(e.target.closest('.rm')){S.set('favR',favs.filter((x,j)=>j!=el.dataset.i));drawFavs();drawSave();return}st.from=f[0];st.to=f[1];save();$('favScr').hidden=true;render();scrollTo({top:0,behavior:'smooth'})};el.onkeydown=e=>{if(e.key=='Enter')el.click()}});
 }
 function drawData(){
   const fmt=s=>s.slice(6)+'/'+s.slice(4,6)+'/'+s.slice(0,4),today=ymd(new Date()),soon=ymd(new Date(Date.now()+7*864e5)),lab={b:'bus',n:'battelli'};
@@ -268,7 +272,7 @@ function drawData(){
   if(RT_URL)$('dataTxt').innerHTML+=RT?` <span class="rton">● Tempo reale, aggiornato alle ${new Date(RT.t*1000).toTimeString().slice(0,5)}</span>`:' <span class="rtoff">Tempo reale non disponibile.</span>'}
 function render(){
   for(const [k,el,ph] of [['from','fFrom','Partenza'],['to','fTo','Arrivo']]){const b=$(el);b.classList.toggle('set',!!st[k]);b.querySelector('span').textContent=st[k]?dn(st[k]):ph}
-  drawFavs();drawData();st.limit=12;search();
+  drawFavs();drawData();drawSave();st.limit=12;search();
 }
 setInterval(()=>{if(D&&!document.hidden){if(RT_URL)pollRT();else{drawFavs();drawData()}}},30000);
 document.addEventListener('visibilitychange',()=>{if(D&&!document.hidden){if(RT_URL)pollRT();else{drawFavs();drawData()}}});
@@ -295,10 +299,14 @@ $('q').oninput=drawRows;$('pBack').onclick=()=>$('picker').hidden=true;
 $('fFrom').onclick=()=>openPicker('from');$('fTo').onclick=()=>openPicker('to');
 $('swap').onclick=()=>{[st.from,st.to]=[st.to,st.from];save();render()};
 $('when').onchange=()=>{st.limit=12;search()};
-$('favBtn').onclick=()=>{if(!st.from||!st.to)return;let f=S.get('favR',FR);if(!f.some(x=>x[0]==st.from&&x[1]==st.to))f.unshift([st.from,st.to]);S.set('favR',f);render()};
+const isFav=()=>S.get('favR',FR).some(x=>x[0]==st.from&&x[1]==st.to);
+function drawSave(){const b=$('saveBtn'),on=isFav();b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.querySelector('span').textContent=on?'Salvato':'Salva'}
+$('saveBtn').onclick=()=>{if(!st.from||!st.to)return;let f=S.get('favR',FR);f=isFav()?f.filter(x=>!(x[0]==st.from&&x[1]==st.to)):[[st.from,st.to],...f];S.set('favR',f);drawSave()};
+$('favBtn').onclick=()=>{drawFavs();$('favScr').hidden=false;$('favScr').scrollTop=0};
+$('fBack').onclick=()=>$('favScr').hidden=true;
 $('loadBtn').onclick=()=>$('file').click();
 $('file').onchange=async e=>{const fl=e.target.files[0];if(!fl)return;try{D=await parseZip(fl);await idb(1,fl);status('');render()}catch(err){status('Il file non sembra un GTFS valido: scegli lo zip "automobilistico" scaricato dagli open data ACTV.')}};
-document.addEventListener('keydown',e=>{if(e.key=='Escape'){$('picker').hidden=true;$('detail').hidden=true}});$('dBack').onclick=()=>$('detail').hidden=true;
+document.addEventListener('keydown',e=>{if(e.key=='Escape'){for(const x of ['picker','detail','favScr'])if(!$(x).hidden){$(x).hidden=true;break}}});$('dBack').onclick=()=>$('detail').hidden=true;
 
 (async()=>{const n=new Date();$('when').value=hm(n.getHours()*3600+n.getMinutes()*60);
   try{const j=await (await fetch('data.json',{cache:'no-cache'})).json();D=build([[j.aut,'b'],[j.nav,'n']])}catch(e){status('Impossibile caricare gli orari. Controlla la connessione e riapri l\'app.');return}{const fs=S.get('favS',null);if(fs&&!S.get('m1',0)){if(!fs.includes('Rialto'))S.set('favS',[...fs,'Rialto']);S.set('m1',1)}const fr=S.get('favR',null);if(fr&&!S.get('m2',0)){S.set('favR',[...FR,...fr.filter(x=>!FR.some(y=>y[0]==x[0]&&y[1]==x[1]))]);S.set('m2',1)}}if(!st.from||!D.byName.has(st.from)||!D.byName.has(st.to)){st.from=PM;st.to='Rialto'}render();pollRT();
