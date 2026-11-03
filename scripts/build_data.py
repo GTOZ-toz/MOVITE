@@ -1,6 +1,6 @@
 """Converte i GTFS ACTV (bus e navigazione) nel file data.json usato dall'app.
 Uso: python3 scripts/build_data.py actv_aut.zip actv_nav.zip data.json"""
-import csv, io, json, sys, zipfile, collections
+import csv, io, json, re, sys, zipfile, collections
 
 def convert(path):
     z = zipfile.ZipFile(path)
@@ -32,6 +32,8 @@ def convert(path):
             tables[kind].append(value)
         return index[kind][key]
     pats, pat_index, trips = [], {}, []
+    m = [re.match(r'^(.*?)(\d+)$', t) for t in times]
+    prefix = m[0].group(1) if m and all(x and x.group(1) == m[0].group(1) for x in m) else None
     for tid, v in times.items():
         v.sort()
         t0 = v[0][2]
@@ -41,13 +43,14 @@ def convert(path):
             pats.append([list(key[0]), list(key[1])])
         r = trip[tid]
         trips.append([idx('routes', list(route[r['route_id']])), idx('hs', r['trip_headsign'].strip()),
-                      idx('svc', r['service_id']), pat_index[key], t0 // 60])
+                      idx('svc', r['service_id']), pat_index[key], t0 // 60,
+                      int(tid[len(prefix):]) if prefix is not None else tid])
     days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     cal = [[r['service_id'], r['start_date'], r['end_date'], ''.join(r[d] for d in days)] for r in rows('calendar.txt')]
     ex = [[r['service_id'], r['date'], r['exception_type']] for r in rows('calendar_dates.txt')]
     feed = next(iter(rows('feed_info.txt')), {})
     end = feed.get('feed_end_date') or max((c[2] for c in cal), default='')
-    return dict(end=end, names=names, pats=pats, trips=trips, cal=cal, ex=ex, **tables)
+    return dict(end=end, tp=prefix or '', names=names, pats=pats, trips=trips, cal=cal, ex=ex, **tables)
 
 if __name__ == '__main__':
     aut, nav, out = sys.argv[1:4]
