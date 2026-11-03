@@ -1,5 +1,5 @@
 // Pagina e icone dalla cache; orari dalla rete quando c'è, altrimenti dalla cache.
-const CACHE = 'movite-v2';
+const CACHE = 'movite-v3';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'icon-512.png', 'icon-64.png'];
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll([...SHELL, 'data.json'])).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
