@@ -143,7 +143,7 @@ const norm=(n,m)=>{n=n.replace(/"/g,'').replace(/\s+/g,' ').trim();if(m=='n')n=n
 const PM="Liberta' Porto Marghera",FS=[PM,'Piazzale Roma','Rialto'],FR=[[PM,'Rialto'],['Rialto',PM]];
 function build(srcs){const TI=new Map(),trips=[],byName=new Map(),modes=new Map(),acts=[];let end='99999999';const ends={};
   for(const [c,m] of srcs){const nm=c.names.map(x=>norm(x,m)),pn=c.pats.map(([ns])=>ns.map(i=>nm[i])),pr=c.pats.map(([ns])=>ns.map(i=>c.names[i]));if(c.end){ends[m]=c.end;if(c.end<end)end=c.end}
-    c.trips.forEach(([r,h,s,p,t0,id])=>{const ti=trips.length,off=c.pats[p][1],tid=(c.tp||'')+id;TI.set(tid,ti);trips.push([c.routes[r][0],norm(c.hs[h],m),m+c.svc[s],c.routes[r][1],m,pn[p],off,t0,pr[p],tid]);
+    c.trips.forEach(([r,h,s,p,t0,id])=>{const ti=trips.length,off=c.pats[p][1],tid=rk((c.tp||'')+id);TI.set(tid,ti);trips.push([c.routes[r][0],norm(c.hs[h],m),m+c.svc[s],c.routes[r][1],m,pn[p],off,t0,pr[p],tid]);
       pn[p].forEach((k,i)=>{let a=byName.get(k);if(!a){byName.set(k,a=[]);modes.set(k,new Set())}a.push([ti,i,(t0+off[i])*60]);modes.get(k).add(m)})});
     const ex={};for(const [id,d,t] of c.ex)(ex[d]??=[]).push([id,t]);
     acts.push(ds=>{const w=new Date(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6)).getDay(),s=new Set();for(const [id,a,b,mm] of c.cal)if(ds>=a&&ds<=b&&mm[w]=='1')s.add(id);for(const [id,t] of ex[ds]||[])t=='1'?s.add(id):s.delete(id);return [...s].map(x=>m+x)})}
@@ -178,20 +178,21 @@ async function idb(op,v){try{const d=await db();return await new Promise(ok=>{co
 
 /* ---------- search ---------- */
 // Tempo reale: incolla qui l'indirizzo del tuo Cloudflare Worker (vuoto = disattivato)
-const RT_URL='';
+const RT_URL='https://movite-rt.giactozz.workers.dev';
+const rk=id=>{const p=String(id).split('_');return p[0]+'_'+p[p.length-1]};
 let RT=null,RTat=0,MID=0,CX=new Set();
 async function pollRT(){
   if(!RT_URL||!D)return;
   try{const r=await fetch(RT_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
     const d=new Date();MID=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/1000;
-    RT=j;RTat=Date.now();CX=new Set();for(const id in j.trips)if(j.trips[id].c){const ti=D.TI.get(id);if(ti!=null)CX.add(ti)}}
+    RT=j;RT.m=new Map(Object.entries(j.trips).map(([k,v])=>[rk(k),v]));RTat=Date.now();CX=new Set();for(const [k,v] of RT.m)if(v.c){const ti=D.TI.get(k);if(ti!=null)CX.add(ti)}}
   catch(e){if(Date.now()-RTat>180000){RT=null;CX=new Set()}}
   drawFavs();drawData();search();if(st.cur&&!$('detail').hidden)showDetail(st.cur,true)}
 function rtD(ti,i,s){
-  if(!RT)return null;const T=D.trips[ti],r=RT.trips[T[9]];if(!r)return null;if(r.c)return 'X';
+  if(!RT)return null;const T=D.trips[ti],r=RT.m.get(T[9]);if(!r)return null;if(r.c)return 'X';
   const q=i+1;let u=null;for(const x of r.u||[]){if(x[0]<=q)u=x;else break}
   if(u){if(u[0]==q&&u[3])return 'S';if(u[1]!=null)return u[1];if(u[2]!=null)return u[2]-(MID+(T[7]+T[6][u[0]-1])*60)}
-  return r.d??null}
+  return r.d!=null&&Math.abs(r.d)<1800?r.d:null}
 const eff=(t,d)=>t+(typeof d=='number'?d:0);
 function rtTag(d){if(d==null)return '';if(d=='X')return '<span class="rt x">soppressa</span>';if(d=='S')return '<span class="rt x">non ferma</span>';
   const m=Math.round(d/60);return m>=1?`<span class="rt late">+${m}′</span>`:m<=-1?`<span class="rt early">${m}′</span>`:'<span class="rt ok">in orario</span>'}
