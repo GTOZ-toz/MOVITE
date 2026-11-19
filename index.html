@@ -145,14 +145,21 @@ const ymd=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.get
 
 const norm=(n,m)=>{n=n.replace(/"/g,'').replace(/\s+/g,' ').trim();if(m=='n')n=n.replace(/ [A-H]$/,'');if(/^P\.le Roma\b/.test(n)||n=='VENEZIA'||n=='VENEZIA CORSIA C')return 'Piazzale Roma';return n.replace(/\b[A-Z]{3,}\b/g,w=>['FS','ULSS','SFMR','SME'].includes(w)?w:w[0]+w.slice(1).toLowerCase())};
 const PM="Liberta' Porto Marghera",FS=[PM,'Piazzale Roma','Rialto'],FR=[[PM,'Rialto'],['Rialto',PM]];
-function build(srcs){const TI=new Map(),trips=[],byName=new Map(),modes=new Map(),acts=[];let end='99999999';const ends={};
-  for(const [c,m] of srcs){const nm=c.names.map(x=>norm(x,m)),pn=c.pats.map(([ns])=>ns.map(i=>nm[i])),pr=c.pats.map(([ns])=>ns.map(i=>c.names[i]));if(c.end){ends[m]=c.end;if(c.end<end)end=c.end}
-    c.trips.forEach(([r,h,s,p,t0,id])=>{const ti=trips.length,off=c.pats[p][1],tid=rk((c.tp||'')+id);TI.set(tid,ti);trips.push([c.routes[r][0],norm(c.hs[h],m),m+c.svc[s],c.routes[r][1],m,pn[p],off,t0,pr[p],tid]);
+function feedStart(c){let s=c.start||'';if(!s){for(const x of c.cal)if(!s||x[1]<s)s=x[1];for(const x of c.ex)if(!s||x[1]<s)s=x[1]}return s||'00000000'}
+function build(j){const TI=new Map(),trips=[],byName=new Map(),modes=new Map(),feeds={},ends={};
+  for(const [mk,m] of [['aut','b'],['nav','n']]){const fl=Array.isArray(j[mk])?j[mk]:[j[mk]];feeds[m]=[];
+   fl.forEach((c,fi)=>{const sp=m+fi+':',nm=c.names.map(x=>norm(x,m)),pn=c.pats.map(([ns])=>ns.map(i=>nm[i])),pr=c.pats.map(([ns])=>ns.map(i=>c.names[i]));
+    if(c.end&&(!ends[m]||c.end>ends[m]))ends[m]=c.end;
+    c.trips.forEach(([r,h,s,p,t0,id])=>{const ti=trips.length,off=c.pats[p][1],tid=rk((c.tp||'')+id);(TI.get(tid)||TI.set(tid,[]).get(tid)).push(ti);trips.push([c.routes[r][0],norm(c.hs[h],m),sp+c.svc[s],c.routes[r][1],m,pn[p],off,t0,pr[p],tid]);
       pn[p].forEach((k,i)=>{let a=byName.get(k);if(!a){byName.set(k,a=[]);modes.set(k,new Set())}a.push([ti,i,(t0+off[i])*60]);modes.get(k).add(m)})});
     const ex={};for(const [id,d,t] of c.ex)(ex[d]??=[]).push([id,t]);
-    acts.push(ds=>{const w=new Date(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6)).getDay(),s=new Set();for(const [id,a,b,mm] of c.cal)if(ds>=a&&ds<=b&&mm[w]=='1')s.add(id);for(const [id,t] of ex[ds]||[])t=='1'?s.add(id):s.delete(id);return [...s].map(x=>m+x)})}
+    feeds[m].push({start:feedStart(c),act:ds=>{const w=new Date(+ds.slice(0,4),+ds.slice(4,6)-1,+ds.slice(6)).getDay(),s=new Set();for(const [id,a,b,mm] of c.cal)if(ds>=a&&ds<=b&&mm[w]=='1')s.add(id);for(const [id,t] of ex[ds]||[])t=='1'?s.add(id):s.delete(id);return [...s].map(x=>sp+x)}})});
+   feeds[m].sort((x,y)=>x.start<y.start?1:-1)}
   for(const a of byName.values())a.sort((x,y)=>x[2]-y[2]);
-  return {names:[...byName.keys()].sort((a,b)=>dn(a).localeCompare(dn(b),'it')),byName,modes,trips,end,ends,TI,active:ds=>new Set(acts.flatMap(f=>f(ds)))}}
+  const end=Object.values(ends).reduce((a,e)=>e<a?e:a,'99999999');
+  // per ogni data usa, per bus e battelli, l'orario più recente già in vigore
+  const active=ds=>{const s=new Set();for(const m in feeds){const f=feeds[m].find(f=>f.start<=ds)||feeds[m][feeds[m].length-1];if(f)for(const x of f.act(ds))s.add(x)}return s};
+  return {names:[...byName.keys()].sort((a,b)=>dn(a).localeCompare(dn(b),'it')),byName,modes,trips,end,ends,TI,active}}
 /* ---------- GTFS loader ---------- */
 function rows(txt){
   const lines=txt.split(/\r?\n/);const head=split(lines[0].replace(/^﻿/,''));const ix={};head.forEach((h,i)=>ix[h.trim()]=i);
@@ -189,7 +196,7 @@ async function pollRT(){
   if(!RT_URL||!D)return;
   try{const r=await fetch(RT_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
     const d=new Date();MID=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/1000;
-    RT=j;RT.m=new Map(Object.entries(j.trips).map(([k,v])=>[rk(k),v]));RTat=Date.now();CX=new Set();for(const [k,v] of RT.m)if(v.c){const ti=D.TI.get(k);if(ti!=null)CX.add(ti)}}
+    RT=j;RT.m=new Map(Object.entries(j.trips).map(([k,v])=>[rk(k),v]));RTat=Date.now();CX=new Set();for(const [k,v] of RT.m)if(v.c)for(const ti of D.TI.get(k)||[])CX.add(ti)}
   catch(e){if(Date.now()-RTat>180000){RT=null;CX=new Set()}}
   drawFavs();drawData();search();if(st.cur&&!$('detail').hidden)showDetail(st.cur,true)}
 function rtD(ti,i,s){
@@ -309,7 +316,7 @@ $('file').onchange=async e=>{const fl=e.target.files[0];if(!fl)return;try{D=awai
 document.addEventListener('keydown',e=>{if(e.key=='Escape'){for(const x of ['picker','detail','favScr'])if(!$(x).hidden){$(x).hidden=true;break}}});$('dBack').onclick=()=>$('detail').hidden=true;
 
 (async()=>{const n=new Date();$('when').value=hm(n.getHours()*3600+n.getMinutes()*60);
-  try{const j=await (await fetch('data.json',{cache:'no-cache'})).json();D=build([[j.aut,'b'],[j.nav,'n']])}catch(e){status('Impossibile caricare gli orari. Controlla la connessione e riapri l\'app.');return}{const fs=S.get('favS',null);if(fs&&!S.get('m1',0)){if(!fs.includes('Rialto'))S.set('favS',[...fs,'Rialto']);S.set('m1',1)}const fr=S.get('favR',null);if(fr&&!S.get('m2',0)){S.set('favR',[...FR,...fr.filter(x=>!FR.some(y=>y[0]==x[0]&&y[1]==x[1]))]);S.set('m2',1)}}if(!st.from||!D.byName.has(st.from)||!D.byName.has(st.to)){st.from=PM;st.to='Rialto'}render();pollRT();
+  try{const j=await (await fetch('data.json',{cache:'no-cache'})).json();D=build(j)}catch(e){status('Impossibile caricare gli orari. Controlla la connessione e riapri l\'app.');return}{const fs=S.get('favS',null);if(fs&&!S.get('m1',0)){if(!fs.includes('Rialto'))S.set('favS',[...fs,'Rialto']);S.set('m1',1)}const fr=S.get('favR',null);if(fr&&!S.get('m2',0)){S.set('favR',[...FR,...fr.filter(x=>!FR.some(y=>y[0]==x[0]&&y[1]==x[1]))]);S.set('m2',1)}}if(!st.from||!D.byName.has(st.from)||!D.byName.has(st.to)){st.from=PM;st.to='Rialto'}render();pollRT();
   
   })();
 </script>
