@@ -96,12 +96,12 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 @media (prefers-reduced-motion:no-preference){.row,.field{transition:transform .1s}.row:active,.field:active{transform:scale(.98)}}
 /* niente scorrimento orizzontale: ogni riga resta dentro lo schermo, si scorre solo in verticale */
 body,#favScr,#detail,#picker{touch-action:pan-y}
-main,#favScr,#detail,#picker{overflow-x:hidden}
-body{background:var(--bg);min-height:100%;display:flex;flex-direction:column}
+main{overflow-x:clip}#favScr,#detail,#picker{overflow-x:hidden}
+body{background:var(--bg);height:auto;min-height:100%;display:flex;flex-direction:column}
 /* app installata: iOS sfuma la fascia sotto l'orologio; spostiamo logo, titoli e pulsanti un po' più in basso */
 @media (display-mode:standalone){
-  header{padding-top:30px}
-  #favScr .ph,#detail .ph,#picker .ph{padding-top:calc(env(safe-area-inset-top,0px) + 20px)!important;height:calc(80px + env(safe-area-inset-top,0px))!important}
+  header{padding-top:26px}
+  #favScr .ph,#detail .ph,#picker .ph{padding-top:calc(env(safe-area-inset-top,0px) + 16px)!important;height:calc(76px + env(safe-area-inset-top,0px))!important}
 }
 main{flex:1;width:100%;align-content:start;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
 #favScr,#detail,#picker{background:linear-gradient(var(--blue) 50%,var(--bg) 50%);overscroll-behavior:contain}
