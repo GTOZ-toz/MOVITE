@@ -50,8 +50,8 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .empty{color:var(--muted);font-size:14px;line-height:1.5;padding-top:12px}
 .res{display:grid}
 .trip{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding-block:14px;border-bottom:1px solid var(--line)}
-#favScr,#detail{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
-#favScr .ph,#detail .ph{background:var(--blue);color:#fff;display:flex;align-items:center;gap:12px;height:60px;font-size:20px;letter-spacing:1px;text-transform:uppercase;padding-left:max(8px,env(safe-area-inset-left,0px));position:sticky;top:0;z-index:1}
+.scr,#favScr,#detail{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding-top:env(safe-area-inset-top,0px)}
+.scr .ph,#favScr .ph,#detail .ph{background:var(--blue);color:#fff;display:flex;align-items:center;gap:12px;height:60px;font-size:20px;letter-spacing:1px;text-transform:uppercase;padding-left:max(8px,env(safe-area-inset-left,0px));position:sticky;top:0;z-index:1}
 .dwrap{max-width:560px;margin:0 auto;display:grid;gap:14px;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
 #dSum .tt{font-size:28px}
 .leg{display:grid;gap:10px;padding-block:6px}
@@ -95,8 +95,8 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .status button{background:none;border:0;color:var(--blue);font:inherit;text-decoration:underline;cursor:pointer}
 @media (prefers-reduced-motion:no-preference){.row,.field{transition:transform .1s}.row:active,.field:active{transform:scale(.98)}}
 /* niente scorrimento orizzontale: ogni riga resta dentro lo schermo, si scorre solo in verticale */
-body,#favScr,#detail,#picker{touch-action:pan-y}
-main{overflow-x:clip}#favScr,#detail,#picker{overflow-x:hidden}
+body,.scr,#favScr,#detail,#picker{touch-action:pan-y}
+main{overflow-x:clip}.scr,#favScr,#detail,#picker{overflow-x:hidden}
 /* fascia in alto: iOS la colora con lo sfondo della pagina, quindi la pagina ha sfondo rosso;
    il grigio lo dipingono il body e, quando si tira la pagina oltre il fondo, un livello fisso dietro */
 html{background:var(--blue)}
@@ -107,23 +107,42 @@ main{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))!important}
 /* app installata: iOS sfuma la fascia sotto l'orologio; spostiamo logo, titoli e pulsanti un po' più in basso */
 @media (display-mode:standalone){
   header{padding-top:26px}
-  #favScr .ph,#detail .ph,#picker .ph{padding-top:calc(env(safe-area-inset-top,0px) + 16px)!important;height:calc(76px + env(safe-area-inset-top,0px))!important}
+  .scr .ph,#favScr .ph,#detail .ph,#picker .ph{padding-top:calc(env(safe-area-inset-top,0px) + 16px)!important;height:calc(76px + env(safe-area-inset-top,0px))!important}
 }
 main{flex:1;width:100%;align-content:start;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
-#favScr,#detail,#picker{background:linear-gradient(var(--blue) 50%,var(--bg) 50%);overscroll-behavior:contain}
-#favScr,#detail{padding-top:0!important;display:flex;flex-direction:column}
+.scr,#favScr,#detail,#picker{background:linear-gradient(var(--blue) 50%,var(--bg) 50%);overscroll-behavior:contain}
+.scr,#favScr,#detail{padding-top:0!important;display:flex;flex-direction:column}
 #picker{padding-top:0!important}
-#favScr .ph,#detail .ph,#picker .ph{padding-top:env(safe-area-inset-top,0px);height:calc(60px + env(safe-area-inset-top,0px));flex-shrink:0}
+.scr .ph,#favScr .ph,#detail .ph,#picker .ph{padding-top:env(safe-area-inset-top,0px);height:calc(60px + env(safe-area-inset-top,0px));flex-shrink:0}
 .dwrap{flex:1 0 auto;width:100%;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax);padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))!important}
 .pbody{background:var(--bg)}
 .dwrap>*,.leg,.lh>div,.xfer>div,.stops li>span:last-child{min-width:0}
 .lh .hs,.trip .hs{white-space:normal}.xfer svg,.lh .ln{flex-shrink:0}.stops li>span:last-child{overflow-wrap:anywhere}
+#picker{z-index:30}
+.mi{display:flex;gap:16px;align-items:center;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:16px 2px;font:inherit;color:var(--fg);text-align:left;cursor:pointer}
+.mi:last-child{border-bottom:0}.mi svg{color:var(--blue);flex-shrink:0}.mi b{display:block;font-weight:500;font-size:16px}.mi small{color:var(--muted);font-size:13px;line-height:1.4}
+.pickf{display:flex;align-items:center;gap:12px;width:100%;min-width:0;background:var(--card);border:0;border-radius:26px;box-shadow:0 2px 8px rgba(0,0,0,.09);height:52px;padding:0 20px;font:inherit;font-size:16px;font-weight:500;color:var(--blue);cursor:pointer;text-align:left}
+.pickf span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pickf.empty span{color:var(--muted);font-weight:400}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{border:1.5px solid var(--blue);background:var(--card);color:var(--blue);border-radius:18px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;min-width:42px}
+.chips button.on{background:var(--blue);color:#fff}
+.mode{background:rgba(255,255,255,.18);border:0;color:#fff;font:inherit;font-size:15px;font-weight:400;border-radius:14px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.autoNote{font-size:13px;color:var(--muted);padding-top:10px}
+.rule{display:grid;gap:4px;padding-block:12px;border-bottom:1px solid var(--line);position:relative;padding-right:36px}
+.rule:first-child{padding-top:0}.rule:last-child{border-bottom:0}.rule b{color:var(--blue);font-weight:600}.rule small{color:var(--muted);font-size:14px}
+.rule .rm{top:2px}.rule:first-child .rm{top:-8px}
+.form{display:grid;gap:12px}.form h3{margin:0;font-size:15px;font-weight:500;color:var(--blue);text-transform:uppercase;letter-spacing:1px}
+.trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:15px}.trow input{font:inherit;font-size:16px;border:1.5px solid var(--line);border-radius:12px;padding:6px 10px;background:var(--card);color:var(--fg)}
+.primary{background:var(--blue);color:#fff;border:0;border-radius:24px;padding:12px;font:inherit;font-size:16px;font-weight:500;cursor:pointer}
+.err{color:var(--blue);font-size:14px;min-height:1em}
+.bd{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding-block:12px;border-bottom:1px solid var(--line);cursor:pointer}.bd:last-child{border-bottom:0}.bd .tt{font-size:20px}
+.bd .hs{white-space:normal}#aDays{flex-wrap:nowrap;gap:6px}#aDays button{flex:1;min-width:0;padding:7px 0}.rule:only-child{padding-bottom:0}
 </style>
 
 </head>
 <body>
 <header><div class="wrap">
-  <div class="bar"><span class="ibtn sp" aria-hidden="true"></span>
+  <div class="bar"><button class="ibtn" id="menuBtn" aria-label="Menu"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <span class="logo"><img src="icon-64.png" alt="" width="34" height="34">MOVITE</span>
   <button class="ibtn" id="favBtn" title="Percorsi preferiti" aria-label="Apri i percorsi preferiti"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg></button></div>
   <div class="fields">
@@ -134,16 +153,43 @@ main{flex:1;width:100%;align-content:start;background:var(--bg);box-shadow:0 0 0
     <button class="field" id="fTo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 21V4h11l-2 4 2 4H5"/></svg><span>Arrivo</span></button>
     <button class="swapbtn" id="swap" aria-label="Inverti partenza e arrivo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg></button>
     </div>
-    <label class="field" for="when"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dayLbl" style="font-weight:500">Oggi</span><span>alle</span><input type="time" id="when"></label>
+    <label class="field" for="when"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="dayLbl" style="font-weight:500">Oggi</span><button type="button" class="mode" id="modeBtn" aria-label="Cambia tra partenza e arrivo">parti alle</button><input type="time" id="when"></label>
   </div>
 </div></header>
 
 <main class="wrap">
   <div class="beta" id="dataBox"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6M10 3v6L4 20h16L14 9V3"/></svg><div id="dataTxt"><b>Dati di esempio.</b> Carica il GTFS bus ACTV per gli orari reali.</div><button class="act" id="loadBtn" hidden>Carica</button><input type="file" id="file" accept=".zip" hidden></div>
-  <section class="card" id="resCard" hidden><div class="ch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l1-3M16 21l-1-3"/></svg><span id="resTitle">Prossimi bus</span><button class="save" id="saveBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg><span>Salva</span></button></div><div class="res" id="res"></div></section>
+  <section class="card" id="resCard" hidden><div class="ch"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21l1-3M16 21l-1-3"/></svg><span id="resTitle">Prossimi bus</span><button class="save" id="saveBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg><span>Salva</span></button></div><div class="autoNote" id="autoNote" hidden></div><div class="res" id="res"></div></section>
   <p class="status" id="status"></p>
 </main>
 
+<div id="menuScr" class="scr" hidden>
+  <div class="ph"><button class="ibtn" data-close="menuScr" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Menu</span></div>
+  <div class="dwrap"><div class="card">
+    <button class="mi" id="miBoard"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 9h6M7 13h10M9 21h6"/></svg><span><b>Partenze da una fermata</b><small>Tutti i mezzi in partenza, con i ritardi in tempo reale</small></span></button>
+    <button class="mi" id="miAuto"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg><span><b>Percorsi automatici</b><small>L'app si apre sul percorso giusto in base al giorno e all'ora</small></span></button>
+    <button class="mi" id="miFav"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg><span><b>Percorsi preferiti</b><small>I percorsi salvati con le prossime partenze</small></span></button>
+  </div></div>
+</div>
+<div id="boardScr" class="scr" hidden>
+  <div class="ph"><button class="ibtn" data-close="boardScr" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Partenze</span></div>
+  <div class="dwrap"><button class="pickf" id="bStop"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><span>Scegli una fermata</span></button><div class="chips" id="bModes"></div><div class="card"><div id="board"></div></div></div>
+</div>
+<div id="autoScr" class="scr" hidden>
+  <div class="ph"><button class="ibtn" data-close="autoScr" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Percorsi automatici</span></div>
+  <div class="dwrap">
+    <div class="card"><div id="rules"></div></div>
+    <div class="card form"><h3>Nuovo percorso automatico</h3>
+      <button class="pickf empty" id="aFrom"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><span>Partenza</span></button>
+      <button class="pickf empty" id="aTo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 21V4h11l-2 4 2 4H5"/></svg><span>Arrivo</span></button>
+      <div class="chips" id="aDays"></div>
+      <div class="trow"><span>dalle</span><input type="time" id="aStart" value="08:00"><span>alle</span><input type="time" id="aEnd" value="09:00"></div>
+      <p class="err" id="aErr"></p>
+      <button class="primary" id="aAdd">Aggiungi</button>
+    </div>
+    <p class="status">Quando apri l'app in una di queste fasce orarie, la ricerca parte già dal percorso indicato. Puoi sempre cambiarlo a mano.</p>
+  </div>
+</div>
 <div id="favScr" class="scr" hidden>
   <div class="ph"><button class="ibtn" id="fBack" aria-label="Indietro"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H5M11 6l-6 6 6 6"/></svg></button><span>Percorsi preferiti</span></div>
   <div class="dwrap"><div class="card"><div id="favs"></div></div><p class="status">Per aggiungere un percorso, cercalo nella home e tocca <b>Salva</b>.</p></div>
@@ -162,7 +208,7 @@ main{flex:1;width:100%;align-content:start;background:var(--bg);box-shadow:0 0 0
 const $=id=>document.getElementById(id);
 const S={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let D=null; // {names:[], byName:Map(name->[[trip,seq,secs]]), trips:[[short,headsign,service,color]], active(dateStr)->Set}
-let st={from:S.get('from',null),to:S.get('to',null),tab:'all',which:'from',limit:12};
+let st={from:S.get('from',null),to:S.get('to',null),tab:'all',which:'from',limit:12,mode:'dep',blimit:30,bmode:'all',ad:[1,2,3,4,5]};
 const hm=s=>{s=((s%86400)+86400)%86400;return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60)%60).padStart(2,'0')};
 const toS=t=>{const p=t.split(':');return +p[0]*3600+ +p[1]*60+ +(p[2]||0)};
 const ymd=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
@@ -222,7 +268,7 @@ async function pollRT(){
     const d=new Date();MID=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()/1000;
     RT=j;RT.m=new Map(Object.entries(j.trips).map(([k,v])=>[rk(k),v]));RTat=Date.now();CX=new Set();for(const [k,v] of RT.m)if(v.c)for(const ti of D.TI.get(k)||[])CX.add(ti)}
   catch(e){if(Date.now()-RTat>180000){RT=null;CX=new Set()}}
-  drawFavs();drawData();search();if(st.cur&&!$('detail').hidden)showDetail(st.cur,true)}
+  drawFavs();drawData();search();if(!$('boardScr').hidden)drawBoard();if(st.cur&&!$('detail').hidden)showDetail(st.cur,true)}
 function rtD(ti,i,s){
   if(!RT)return null;const T=D.trips[ti],r=RT.m.get(T[9]);if(!r)return null;if(r.c)return 'X';
   const q=i+1;let u=null;for(const x of r.u||[]){if(x[0]<=q)u=x;else break}
@@ -263,8 +309,9 @@ function search(){
   card.hidden=false;$('resTitle').textContent=dn(st.from)+' → '+dn(st.to);
   if(!D.byName.has(st.from)||!D.byName.has(st.to)){$('res').innerHTML='<p class="empty">Una delle fermate non esiste in questi dati.</p>';return}
   if(st.from==st.to){$('res').innerHTML='<p class="empty">Partenza e arrivo coincidono.</p>';return}
-  const [h,m]=($('when').value||'00:00').split(':');const list=plan(st.from,st.to,h*3600+m*60,D.active(ymd(new Date())));
-  if(!list.length){$('res').innerHTML='<p class="empty">Nessuna soluzione con al massimo un cambio per il resto della giornata.</p>';return}
+  const [h,m]=($('when').value||'00:00').split(':'),T0=h*3600+m*60,nd=new Date(),ns=nd.getHours()*3600+nd.getMinutes()*60,act=D.active(ymd(nd));
+  const list=st.mode=='arr'?plan(st.from,st.to,T0>ns?Math.max(ns,T0-3*3600):T0-3*3600,act).filter(o=>o[o.length-1][6]<=T0).reverse():plan(st.from,st.to,T0,act);
+  if(!list.length){$('res').innerHTML=st.mode=='arr'?`<p class="empty">Nessuna soluzione con al massimo un cambio che arrivi entro le ${hm(T0)}.</p>`:'<p class="empty">Nessuna soluzione con al massimo un cambio per il resto della giornata.</p>';return}
   const now=new Date(),nowS=now.getHours()*3600+now.getMinutes()*60,T=D.trips;
   const badge=ti=>lnBadge(ti);
   $('res').innerHTML=list.slice(0,st.limit).map(o=>{const f=o[0],l=o[o.length-1],dl=rtD(f[0],f[1],f[3]),w=Math.round((f[5]-nowS)/60),pas=f[5]!=f[3]?`passa alle ${hm(f[5])} · `:'';
@@ -291,6 +338,64 @@ $('res').onclick=e=>{const r=e.target.closest('.trip');if(r&&st.list)showDetail(
 $('res').onkeydown=e=>{if(e.key=='Enter'&&e.target.classList.contains('trip'))e.target.click()};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+
+/* ---------- partenze da una fermata ---------- */
+const lastIdx=ti=>D.trips[ti][5].length-1,schT=(ti,i)=>(D.trips[ti][7]+D.trips[ti][6][i])*60;
+function drawBoard(){
+  const stop=st.bstop;$('bStop').classList.toggle('empty',!stop);$('bStop').querySelector('span').textContent=stop?dn(stop):'Scegli una fermata';
+  if(!stop||!D.byName.has(stop)){$('bModes').innerHTML='';$('board').innerHTML='<p class="empty">Scegli una fermata per vedere tutti i mezzi in partenza.</p>';return}
+  const ms=[...D.modes.get(stop)];if(ms.length<2)st.bmode='all';
+  $('bModes').innerHTML=ms.length>1?[['all','Tutti'],['b','Bus'],['n','Battelli']].map(([k,l])=>`<button data-m="${k}" class="${st.bmode==k?'on':''}">${l}</button>`).join(''):'';
+  const d=new Date(),now=d.getHours()*3600+d.getMinutes()*60,act=D.active(ymd(d)),back=RT?BACK:0,T=D.trips,seen=new Set(),out=[];
+  for(const [ti,i,t] of D.byName.get(stop)){if(t<now-back||seen.has(ti)||i==lastIdx(ti)||!act.has(T[ti][2]))continue;if(st.bmode!='all'&&T[ti][4]!=st.bmode)continue;
+    const dl=rtD(ti,i,t),num=typeof dl=='number',et=eff(t,dl);if(dl=='S')continue;
+    if(dl=='X'||CX.has(ti)){if(t>=now){seen.add(ti);out.push([ti,i,t,t,'X'])}continue}
+    if((t<now&&!num)||et<now)continue;seen.add(ti);out.push([ti,i,t,et,dl])}
+  out.sort((a,b)=>a[3]-b[3]);st.blist=out;
+  if(!out.length){$('board').innerHTML='<p class="empty">Nessuna partenza per il resto della giornata.</p>';return}
+  $('board').innerHTML=out.slice(0,st.blimit).map(([ti,i,t,et,dl],k)=>{const w=Math.round((et-now)/60),p=T[ti][4]=='n'&&T[ti][8][i].match(/"?\s?([A-H])"?$/);
+    return `<div class="bd" role="button" tabindex="0" data-k="${k}">${lnBadge(ti)}<div class="mid"><div class="tt">${hm(t)}${rtTag(dl)}</div><div class="hs">dir. ${esc(dn(T[ti][1]))}${p?` · <span class="pt">pontile ${p[1]}</span>`:''}${et!=t&&dl!='X'?` · passa alle ${hm(et)}`:''}</div></div><div class="wait">${dl=='X'?'':w<=0?'ora':w<120?'tra '+w+'′':''}</div></div>`}).join('')+
+    (out.length>st.blimit?`<button class="more" id="bMore">Mostra altre ${out.length-st.blimit}</button>`:'');
+  const mb=$('bMore');if(mb)mb.onclick=()=>{st.blimit+=30;drawBoard()}}
+function openBoard(stop){st.bstop=stop||st.bstop||S.get('bstop',null)||st.from;st.blimit=30;st.bmode=st.bmode||'all';drawBoard();$('boardScr').hidden=false;$('boardScr').scrollTop=0}
+$('bStop').onclick=()=>openPicker('board',n=>{st.bstop=n;S.set('bstop',n);st.blimit=30;st.bmode='all';drawBoard()},'Fermata');
+$('bModes').onclick=e=>{const m=e.target.dataset.m;if(m){st.bmode=m;st.blimit=30;drawBoard()}};
+$('board').onclick=e=>{const r=e.target.closest('.bd');if(!r)return;const [ti,i,t,et]=st.blist[+r.dataset.k],l=lastIdx(ti),s=schT(ti,l);showDetail([[ti,i,l,t,s,et,eff(s,rtD(ti,l,s))]])};
+
+/* ---------- percorsi automatici ---------- */
+const DAYS=['D','L','M','M','G','V','S'],DN=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'],ORD=[1,2,3,4,5,6,0];
+function daysTxt(d){const s=[...d].sort().join('');return s=='12345'?'Lun–Ven':s=='0123456'?'Tutti i giorni':s=='06'?'Sabato e domenica':ORD.filter(x=>d.includes(x)).map(x=>DN[x]).join(', ')}
+const inRange=(v,a,b)=>a<=b?v>=a&&v<b:v>=a||v<b;
+function autoNow(){const d=new Date(),v=hm(d.getHours()*3600+d.getMinutes()*60);return S.get('auto',[]).find(r=>r.d.includes(d.getDay())&&inRange(v,r.s,r.e)&&D.byName.has(r.f)&&D.byName.has(r.t))||null}
+function applyAuto(){const r=autoNow();if(!r)return false;st.from=r.f;st.to=r.t;st.auto=r;st.mode='dep';st.manual=false;save();syncNow();return true}
+function drawAuto(){
+  const rs=S.get('auto',[]);
+  $('rules').innerHTML=rs.length?rs.map((r,i)=>`<div class="rule" data-i="${i}"><button class="rm" aria-label="Elimina">×</button><b>${esc(dn(r.f))} → ${esc(dn(r.t))}</b><small>${daysTxt(r.d)} · dalle ${r.s} alle ${r.e}</small></div>`).join(''):'<p class="empty" style="padding:0">Nessun percorso automatico. Aggiungine uno qui sotto.</p>';
+  for(const [k,el] of [['af','aFrom'],['at','aTo']]){$(el).classList.toggle('empty',!st[k]);$(el).querySelector('span').textContent=st[k]?dn(st[k]):(k=='af'?'Partenza':'Arrivo')}
+  $('aDays').innerHTML=ORD.map(x=>`<button data-d="${x}" class="${st.ad.includes(x)?'on':''}" aria-label="${DN[x]}">${DAYS[x]}</button>`).join('');
+  $('aAdd').disabled=rs.length>=8}
+function openAuto(){st.ad=st.ad||[1,2,3,4,5];$('aErr').textContent='';drawAuto();$('autoScr').hidden=false;$('autoScr').scrollTop=0}
+$('aFrom').onclick=()=>openPicker('af',n=>{st.af=n;drawAuto()},'Partenza');
+$('aTo').onclick=()=>openPicker('at',n=>{st.at=n;drawAuto()},'Arrivo');
+$('aDays').onclick=e=>{const d=e.target.dataset.d;if(d==null)return;const x=+d;st.ad=st.ad.includes(x)?st.ad.filter(y=>y!=x):[...st.ad,x];drawAuto()};
+$('rules').onclick=e=>{const r=e.target.closest('.rule');if(!r||!e.target.closest('.rm'))return;S.set('auto',S.get('auto',[]).filter((x,i)=>i!=r.dataset.i));drawAuto()};
+$('aAdd').onclick=()=>{const s=$('aStart').value,en=$('aEnd').value,rs=S.get('auto',[]);let err='';
+  if(!st.af||!st.at)err='Scegli partenza e arrivo.';else if(st.af==st.at)err='Partenza e arrivo devono essere diversi.';else if(!st.ad.length)err='Scegli almeno un giorno.';else if(!s||!en||s==en)err='Indica un orario di inizio e uno di fine diversi.';else if(rs.length>=8)err='Puoi salvare al massimo 8 percorsi automatici.';
+  $('aErr').textContent=err;if(err)return;
+  S.set('auto',[...rs,{f:st.af,t:st.at,d:[...st.ad].sort(),s,e:en}]);st.af=st.at=null;drawAuto();if(applyAuto())render()};
+
+/* ---------- menu e schermate ---------- */
+$('menuBtn').onclick=()=>{$('menuScr').hidden=false};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).hidden=true);
+$('miBoard').onclick=()=>{$('menuScr').hidden=true;openBoard()};
+$('miAuto').onclick=()=>{$('menuScr').hidden=true;openAuto()};
+$('miFav').onclick=()=>{$('menuScr').hidden=true;$('favBtn').click()};
+
+/* ---------- parti alle / arriva entro ---------- */
+function drawMode(){$('modeBtn').textContent=st.mode=='arr'?'arriva entro':'parti alle'}
+$('modeBtn').onclick=e=>{e.preventDefault();e.stopPropagation();
+  if(st.mode=='arr'){st.mode='dep';st.manual=false;syncNow()}else{st.mode='arr';st.manual=true;const n=new Date(),s=Math.ceil((n.getHours()*3600+n.getMinutes()*60+3600)/300)*300;$('when').value=hm(s)}
+  drawMode();st.limit=12;search()};
 /* ---------- UI ---------- */
 const ACC={a:'à',e:'è',i:'ì',o:'ò',u:'ù'},ACR=new Set(['FS','ULSS','SFMR','SME','ACTV']);
 const dnC=new Map();function dn(n){let r=dnC.get(n);if(r)return r;
@@ -317,14 +422,14 @@ function drawData(){
   if(RT_URL)$('dataTxt').innerHTML+=RT?` <span class="rton">● Tempo reale, aggiornato alle ${new Date(RT.t*1000).toTimeString().slice(0,5)}</span>`:' <span class="rtoff">Tempo reale non disponibile.</span>'}
 function render(){
   for(const [k,el,ph] of [['from','fFrom','Partenza'],['to','fTo','Arrivo']]){const b=$(el);b.classList.toggle('set',!!st[k]);b.querySelector('span').textContent=st[k]?dn(st[k]):ph}
-  drawFavs();drawData();drawSave();st.limit=12;search();
+  drawFavs();drawData();drawSave();drawMode();const an=$('autoNote'),au=st.auto&&st.auto.f==st.from&&st.auto.t==st.to;an.hidden=!au;if(au)an.textContent=`Percorso automatico · ${daysTxt(st.auto.d)} dalle ${st.auto.s} alle ${st.auto.e}`;st.limit=12;search();
 }
-setInterval(()=>{if(D&&!document.hidden){syncNow();if(RT_URL)pollRT();else{drawFavs();drawData()}}},30000);
-function syncNow(){if(st.manual)return;const n=new Date(),v=hm(n.getHours()*3600+n.getMinutes()*60);if($('when').value!=v)$('when').value=v}
-document.addEventListener('visibilitychange',()=>{if(D&&!document.hidden){syncNow();if(RT_URL)pollRT();else{drawFavs();drawData()}}});
+setInterval(()=>{if(D&&!document.hidden){syncNow();if(!$('boardScr').hidden&&!RT_URL)drawBoard();if(RT_URL)pollRT();else{drawFavs();drawData()}}},30000);
+function syncNow(){if(st.manual||st.mode=='arr')return;const n=new Date(),v=hm(n.getHours()*3600+n.getMinutes()*60);if($('when').value!=v)$('when').value=v}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){st.hidAt=Date.now();return}if(D&&st.hidAt&&Date.now()-st.hidAt>300000&&applyAuto())render();if(D&&!document.hidden){syncNow();if(!$('boardScr').hidden)drawBoard();if(RT_URL)pollRT();else{drawFavs();drawData()}}});
 const save=()=>{S.set('from',st.from);S.set('to',st.to)};
 function status(t){$('status').innerHTML=t||''}
-function openPicker(which){st.which=which;$('pTitle').textContent=which=='from'?'Partenza':'Arrivo';$('q').value='';$('picker').hidden=false;drawRows();setTimeout(()=>$('q').focus(),50)}
+function openPicker(which,cb,title){st.which=which;st.pickCb=cb||null;$('pTitle').textContent=title||(which=='from'?'Partenza':'Arrivo');$('q').value='';$('picker').hidden=false;drawRows();setTimeout(()=>$('q').focus(),50)}
 function drawRows(){
   const q=fold($('q').value);const favS=S.get('favS',FS),rec=S.get('rec',[]);
   let list=st.tab=='fav'?favS.slice().sort():st.tab=='rec'?rec:D.names;
@@ -337,7 +442,9 @@ function drawRows(){
 }
 $('rows').onclick=e=>{const r=e.target.closest('.row');if(!r)return;const n=r.dataset.n;
   if(e.target.closest('.h')){let f=S.get('favS',FS);f=f.includes(n)?f.filter(x=>x!=n):[...f,n];S.set('favS',f);drawRows();return}
-  st[st.which]=n;S.set('rec',[n,...S.get('rec',[]).filter(x=>x!=n)].slice(0,15));save();$('picker').hidden=true;render()};
+  S.set('rec',[n,...S.get('rec',[]).filter(x=>x!=n)].slice(0,15));$('picker').hidden=true;
+  if(st.pickCb){const cb=st.pickCb;st.pickCb=null;cb(n);return}
+  st[st.which]=n;save();render()};
 $('rows').onkeydown=e=>{if(e.key=='Enter')e.target.click()};
 $('az').onclick=e=>{const l=e.target.dataset.l;if(!l)return;if(l=='q'){$('q').focus();return}const el=$('L-'+l);if(el)el.scrollIntoView({block:'start'})};
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;st.tab=t;[...$('tabs').children].forEach(b=>b.classList.toggle('on',b.dataset.t==t));drawRows()};
@@ -352,10 +459,10 @@ $('favBtn').onclick=()=>{drawFavs();$('favScr').hidden=false;$('favScr').scrollT
 $('fBack').onclick=()=>$('favScr').hidden=true;
 $('loadBtn').onclick=()=>$('file').click();
 $('file').onchange=async e=>{const fl=e.target.files[0];if(!fl)return;try{D=await parseZip(fl);await idb(1,fl);status('');render()}catch(err){status('Il file non sembra un GTFS valido: scegli lo zip "automobilistico" scaricato dagli open data ACTV.')}};
-document.addEventListener('keydown',e=>{if(e.key=='Escape'){for(const x of ['picker','detail','favScr'])if(!$(x).hidden){$(x).hidden=true;break}}});$('dBack').onclick=()=>$('detail').hidden=true;
+document.addEventListener('keydown',e=>{if(e.key=='Escape'){for(const x of ['picker','detail','autoScr','boardScr','favScr','menuScr'])if(!$(x).hidden){$(x).hidden=true;break}}});$('dBack').onclick=()=>$('detail').hidden=true;
 
 (async()=>{const n=new Date();$('when').value=hm(n.getHours()*3600+n.getMinutes()*60);
-  try{const j=await (await fetch('data.json',{cache:'no-cache'})).json();D=build(j)}catch(e){status('Impossibile caricare gli orari. Controlla la connessione e riapri l\'app.');return}{const fs=S.get('favS',null);if(fs&&!S.get('m1',0)){if(!fs.includes('Rialto'))S.set('favS',[...fs,'Rialto']);S.set('m1',1)}const fr=S.get('favR',null);if(fr&&!S.get('m2',0)){S.set('favR',[...FR,...fr.filter(x=>!FR.some(y=>y[0]==x[0]&&y[1]==x[1]))]);S.set('m2',1)}}if(!st.from||!D.byName.has(st.from)||!D.byName.has(st.to)){st.from=PM;st.to='Rialto'}render();pollRT();
+  try{const j=await (await fetch('data.json',{cache:'no-cache'})).json();D=build(j)}catch(e){status('Impossibile caricare gli orari. Controlla la connessione e riapri l\'app.');return}{const fs=S.get('favS',null);if(fs&&!S.get('m1',0)){if(!fs.includes('Rialto'))S.set('favS',[...fs,'Rialto']);S.set('m1',1)}const fr=S.get('favR',null);if(fr&&!S.get('m2',0)){S.set('favR',[...FR,...fr.filter(x=>!FR.some(y=>y[0]==x[0]&&y[1]==x[1]))]);S.set('m2',1)}}if(!applyAuto()&&(!st.from||!D.byName.has(st.from)||!D.byName.has(st.to))){st.from=PM;st.to='Rialto'}render();pollRT();
   
   })();
 </script>
