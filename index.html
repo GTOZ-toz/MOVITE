@@ -97,7 +97,13 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 /* niente scorrimento orizzontale: ogni riga resta dentro lo schermo, si scorre solo in verticale */
 body,#favScr,#detail,#picker{touch-action:pan-y}
 main{overflow-x:clip}#favScr,#detail,#picker{overflow-x:hidden}
-body{background:var(--bg);height:auto;min-height:100%;display:flex;flex-direction:column}
+/* fascia in alto: iOS la colora con lo sfondo della pagina, quindi la pagina ha sfondo rosso;
+   il grigio lo dipingono il body e, quando si tira la pagina oltre il fondo, un livello fisso dietro */
+html{background:var(--blue)}
+:root{padding-bottom:0!important}
+body{background:var(--bg);height:auto;min-height:100%;min-height:100dvh;display:flex;flex-direction:column}
+body::after{content:"";position:fixed;left:0;right:0;top:50%;bottom:0;background:var(--bg);z-index:-1}
+main{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))!important}
 /* app installata: iOS sfuma la fascia sotto l'orologio; spostiamo logo, titoli e pulsanti un po' più in basso */
 @media (display-mode:standalone){
   header{padding-top:26px}
