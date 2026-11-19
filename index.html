@@ -70,7 +70,7 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .trip:last-child{border-bottom:0}
 .ln{min-width:48px;text-align:center;border-radius:10px;padding:7px 8px;font-weight:600;color:#fff;background:var(--blue)}
 .tt{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums}
-.tt small{font-size:15px;color:var(--muted);font-weight:400}
+.tt small{font-size:15px;color:var(--muted);font-weight:400;white-space:nowrap}
 .hs{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mid{min-width:0}
 .wait{font-size:14px;color:var(--blue);font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
@@ -207,19 +207,32 @@ function rtD(ti,i,s){
 const eff=(t,d)=>t+(typeof d=='number'?d:0);
 function rtTag(d){if(d==null)return '';if(d=='X')return '<span class="rt x">soppressa</span>';if(d=='S')return '<span class="rt x">non ferma</span>';
   const m=Math.round(d/60);return m>=1?`<span class="rt late">+${m}′</span>`:m<=-1?`<span class="rt early">${m}′</span>`:'<span class="rt ok">in orario</span>'}
+// Pianificazione sugli orari previsti (programmato + ritardo in tempo reale).
+// BACK: considera anche le corse programmate nell'ora precedente, se il tempo reale dice che devono ancora passare.
+// MINX: cambio minimo assoluto; sotto i 4 min (bus↔battello) o 3 min (stesso mezzo) il cambio è "stretto" e lo segnaliamo.
+const BACK=3600,MINX=60;
 function plan(A,B,t0,act){
-  const T=D.trips,tt=(ti,i)=>(T[ti][7]+T[ti][6][i])*60,Bt=new Map();
-  for(const [ti,sq,t] of D.byName.get(B))if((act.has(T[ti][2])&&!CX.has(ti)))(Bt.get(ti)||Bt.set(ti,[]).get(ti)).push([sq,t]);
-  const reach=(ti,s)=>{const l=Bt.get(ti);if(!l)return null;let r=null;for(const x of l)if(x[0]>s&&(!r||x[0]<r[0]))r=x;return r};
+  const T=D.trips,ok=ti=>act.has(T[ti][2])&&!CX.has(ti),Bt=new Map(),back=RT?BACK:0,sch=(ti,i)=>(T[ti][7]+T[ti][6][i])*60;
+  const est=(ti,i,s)=>{const d=rtD(ti,i,s);return d=='S'||d=='X'?null:[eff(s,d),typeof d=='number']};
+  const board=(ti,i,t,from)=>{if(t<from-back||!ok(ti))return null;const e=est(ti,i,t);if(!e||(t<from&&!e[1]))return null;return e[0]>=from?e[0]:null};
+  const arrive=(ti,i)=>{const s=sch(ti,i),e=est(ti,i,s);return e?e[0]:s};
+  for(const [ti,sq] of D.byName.get(B))if(ok(ti))(Bt.get(ti)||Bt.set(ti,[]).get(ti)).push(sq);
+  const reach=(ti,s)=>{const l=Bt.get(ti);if(!l)return null;let r=null;for(const x of l)if(x>s&&(r==null||x<r))r=x;return r};
   const opts=[],firsts=[];
-  for(const [ti,i,t] of D.byName.get(A)){if(t<t0||!(act.has(T[ti][2])&&!CX.has(ti)))continue;const r=reach(ti,i);if(r)opts.push([[ti,i,r[0],t,r[1]]]);if(t<t0+3*3600&&firsts.length<80)firsts.push([ti,i,t])}
-  for(const [ti,i,t] of firsts){let best=null;const ns=T[ti][5];
-    for(let k=i+1;k<ns.length;k++){const X=ns[k];if(X==B)break;if(X==A)continue;const ta=tt(ti,k),E=D.byName.get(X);
-      let lo=0,hi=E.length;while(lo<hi){const md=lo+hi>>1;E[md][2]<ta+180?lo=md+1:hi=md}
-      for(let j=lo,n=0;j<E.length&&n<300;j++,n++){const [t2,s2,d2]=E[j];if(t2==ti||!(act.has(T[t2][2])&&!CX.has(t2)))continue;if(T[t2][4]!=T[ti][4]&&d2<ta+240)continue;if(best&&d2>=best[1][4])break;const r=reach(t2,s2);if(r){if(!best||r[1]<best[1][4])best=[[ti,i,k,t,ta],[t2,s2,r[0],d2,r[1]]];break}}}
-    if(best)opts.push(best)}
-  opts.sort((x,y)=>y[0][3]-x[0][3]||x.length-y.length);let m=Infinity;const keep=[];
-  for(const o of opts){const ar=o[o.length-1][4];if(ar<m){keep.push(o);m=ar}}
+  for(const [ti,i,t] of D.byName.get(A)){const et=board(ti,i,t,t0);if(et==null)continue;const r=reach(ti,i);
+    if(r!=null)opts.push([[ti,i,r,t,sch(ti,r),et,arrive(ti,r)]]);if(et<t0+3*3600&&firsts.length<100)firsts.push([ti,i,t,et])}
+  for(const [ti,i,t,et] of firsts){let safe=null,tight=null;const ns=T[ti][5];
+    for(let k=i+1;k<ns.length;k++){const X=ns[k];if(X==B)break;if(X==A)continue;const ta=arrive(ti,k),from=ta+MINX,E=D.byName.get(X),lb=from-back;
+      const lbound=v=>{let lo=0,hi=E.length;while(lo<hi){const md=lo+hi>>1;E[md][2]<v?lo=md+1:hi=md}return lo},j0=lbound(lb),j1=lbound(from);
+      // prima le corse programmate prima del cambio ma in ritardo (solo quelle con dati in tempo reale), poi le altre
+      for(let j=j0,n=0;j<E.length&&n<300;j++){const [t2,s2,d2]=E[j];if(t2==ti)continue;if(j<j1){if(!RT.m.has(T[t2][9]))continue}else n++;if(safe&&d2>safe[1][6]+1800)break;
+        const ed=board(t2,s2,d2,from);if(ed==null)continue;const r=reach(t2,s2);if(r==null)continue;const ea=arrive(t2,r);
+        const o=[[ti,i,k,t,sch(ti,k),et,ta],[t2,s2,r,d2,sch(t2,r),ed,ea]],need=T[t2][4]!=T[ti][4]?240:180;
+        if(ed-ta>=need){if(!safe||ea<safe[1][6])safe=o}else if(!tight||ea<tight[1][6])tight=o}}
+    if(safe)opts.push(safe);if(tight&&(!safe||tight[1][6]<safe[1][6])){tight.tight=Math.round((tight[1][5]-tight[0][6])/60);opts.push(tight)}}
+  opts.sort((x,y)=>y[0][5]-x[0][5]||x.length-y.length||(x.tight?1:0)-(y.tight?1:0));let m=Infinity;const keep=[];
+  // a parità di arrivo teniamo anche la corsa che parte prima: è quella che vedi arrivare per prima alla fermata
+  for(const o of opts){const ar=o[o.length-1][6];if(o.tight?ar<m:ar<=m)keep.push(o);if(!o.tight&&ar<m)m=ar}
   return keep.reverse()}
 function search(){
   const card=$('resCard');if(!st.from||!st.to||!D){card.hidden=true;return}
@@ -230,9 +243,9 @@ function search(){
   if(!list.length){$('res').innerHTML='<p class="empty">Nessuna soluzione con al massimo un cambio per il resto della giornata.</p>';return}
   const now=new Date(),nowS=now.getHours()*3600+now.getMinutes()*60,T=D.trips;
   const badge=ti=>lnBadge(ti);
-  $('res').innerHTML=list.slice(0,st.limit).map(o=>{const f=o[0],l=o[o.length-1],dl=rtD(f[0],f[1],f[3]),da=rtD(l[0],l[2],l[4]),w=Math.round((eff(f[3],dl)-nowS)/60);
-    const sub=o.length==1?`dir. ${esc(dn(T[f[0]][1]))}`:`cambio a ${esc(dn(T[f[0]][5][f[2]]))} · ${hm(f[4])} → ${hm(o[1][3])}`;
-    return `<div class="trip" role="button" tabindex="0" data-o="${list.indexOf(o)}"><div class="lns">${o.map(x=>badge(x[0])).join('')}</div><div class="mid"><div class="tt">${hm(f[3])}${rtTag(dl)} <small>→ ${hm(eff(l[4],da))} · ${Math.round((l[4]-f[3])/60)} min</small></div><div class="hs">${sub}</div></div><div class="wait">${w>=0&&w<120?(w==0?'ora':'tra '+w+'′'):''}</div></div>`}).join('')+
+  $('res').innerHTML=list.slice(0,st.limit).map(o=>{const f=o[0],l=o[o.length-1],dl=rtD(f[0],f[1],f[3]),w=Math.round((f[5]-nowS)/60),pas=f[5]!=f[3]?`passa alle ${hm(f[5])} · `:'';
+    const sub=pas+(o.length==1?`dir. ${esc(dn(T[f[0]][1]))}`:`cambio a ${esc(dn(T[f[0]][5][f[2]]))} · ${hm(f[6])} → ${hm(o[1][5])}`)+(o.tight!=null?` <span class="rt late">cambio ${o.tight}′</span>`:'');
+    return `<div class="trip" role="button" tabindex="0" data-o="${list.indexOf(o)}"><div class="lns">${o.map(x=>badge(x[0])).join('')}</div><div class="mid"><div class="tt">${hm(f[3])}${rtTag(dl)} <small>→ ${hm(l[6])} · ${Math.round((l[6]-f[5])/60)} min</small></div><div class="hs">${sub}</div></div><div class="wait">${w>=0&&w<120?(w==0?'ora':'tra '+w+'′'):''}</div></div>`}).join('')+
     (list.length>st.limit?`<button class="more" id="more">Mostra altri ${list.length-st.limit}</button>`:'');
   st.list=list;const mb=$('more');if(mb)mb.onclick=()=>{st.limit+=20;search()};
 }
@@ -242,12 +255,13 @@ function where(ti,i){const T=D.trips[ti],n=T[5][i],r=T[8][i],p=T[4]=='n'&&r.matc
 function showDetail(o,keep){st.cur=o;
   const T=D.trips;let h='';
   o.forEach((x,k)=>{const [ti,a,b,d,ar]=x,t=T[ti],mode=t[4]=='n'?'Battello':'Bus';
-    if(k){const p=o[k-1],ea=eff(p[4],rtD(p[0],p[2],p[4])),ed=eff(d,rtD(ti,a,d)),need=T[p[0]][4]!=t[4]?240:180,risk=ed-ea<need,w=Math.round((ed-ea)/60);h+=`<div class="xfer${risk?' risk':''}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><div><b>Cambio a ${esc(dn(t[5][a]))}</b><br>${risk?'<b>Coincidenza a rischio per il ritardo.</b> ':''}${w} min per il cambio · scendi alle ${hm(ea)}, riparti alle ${hm(ed)}</div></div>`}
+    if(k){const p=o[k-1],ea=eff(p[4],rtD(p[0],p[2],p[4])),ed=eff(d,rtD(ti,a,d)),need=T[p[0]][4]!=t[4]?240:180,risk=ed-ea<need,w=Math.round((ed-ea)/60);h+=`<div class="xfer${risk?' risk':''}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><div><b>Cambio a ${esc(dn(t[5][a]))}</b><br>${risk?'<b>Cambio stretto:</b> valuta tu se riesci a farlo. ':''}${w} min per il cambio · scendi alle ${hm(ea)}, riparti alle ${hm(ed)}</div></div>`}
     const stops=[];for(let i=a;i<=b;i++)stops.push([i,(t[7]+t[6][i])*60]);
     h+=`<div class="leg"><div class="lh">${lnBadge(ti)}<div><b>${mode} ${esc(t[0])}</b><br><span class="hs">direzione ${esc(dn(t[1]))} · ${b-a} fermate · ${Math.round((ar-d)/60)} min</span></div></div>
       <ol class="stops">${stops.map(([i,s],j)=>`<li class="${j==0||j==stops.length-1?'end':'mid2'}"><span class="st">${(()=>{const d=rtD(ti,i,s);return typeof d=='number'&&Math.abs(d)>=60?`<s>${hm(s)}</s> <b class="rtt">${hm(s+d)}</b>`:hm(s)})()}</span><span class="stn">${where(ti,i)}</span></li>`).join('')}</ol></div>`});
   const f=o[0],l=o[o.length-1];
-  $('dSum').innerHTML=`<div class="tt">${hm(f[3])} → ${hm(l[4])}</div><div class="hs">${Math.round((l[4]-f[3])/60)} min in tutto · ${o.length==1?'diretto':(o.length-1)+' cambio'}</div>`;
+  const fd=eff(f[3],rtD(f[0],f[1],f[3])),la=eff(l[4],rtD(l[0],l[2],l[4]));
+  $('dSum').innerHTML=`<div class="tt">${hm(fd)} → ${hm(la)}</div><div class="hs">${fd!=f[3]?'previsto · ':''}${Math.round((la-fd)/60)} min in tutto · ${o.length==1?'diretto':(o.length-1)+' cambio'}</div>`;
   $('dBody').innerHTML=h;$('detail').hidden=false;if(!keep)$('detail').scrollTop=0}
 $('res').onclick=e=>{const r=e.target.closest('.trip');if(r&&st.list)showDetail(st.list[+r.dataset.o])};
 $('res').onkeydown=e=>{if(e.key=='Enter'&&e.target.classList.contains('trip'))e.target.click()};
@@ -265,7 +279,7 @@ function nextOf(a,b,n){if(!D.byName.has(a)||!D.byName.has(b))return [];const d=n
 function drawFavs(){
   const favs=S.get('favR',FR),d=new Date(),nowS=d.getHours()*3600+d.getMinutes()*60;
   $('favs').innerHTML=favs.length?favs.map((f,i)=>{const nx=nextOf(f[0],f[1],3);
-    const chips=nx.length?nx.map(o=>{const dl=rtD(o[0][0],o[0][1],o[0][3]),w=Math.round((eff(o[0][3],dl)-nowS)/60);return `<div class="nx"><span class="nxl">${o.map(x=>lnBadge(x[0])).join('<span class="pl">+</span>')}</span><span class="nxt">${hm(o[0][3])}${rtTag(dl)}</span><span class="nxw">${w<=0?'ora':w<60?'tra '+w+'′':'→ '+hm(o[o.length-1][4])}</span></div>`}).join(''):'<p class="empty">Nessuna corsa per il resto della giornata.</p>';
+    const chips=nx.length?nx.map(o=>{const dl=rtD(o[0][0],o[0][1],o[0][3]),w=Math.round((o[0][5]-nowS)/60);return `<div class="nx"><span class="nxl">${o.map(x=>lnBadge(x[0])).join('<span class="pl">+</span>')}</span><span class="nxt">${hm(o[0][3])}${rtTag(dl)}</span><span class="nxw">${w<=0?'ora':w<60?'tra '+w+'′':'→ '+hm(o[o.length-1][6])}</span></div>`}).join(''):'<p class="empty">Nessuna corsa per il resto della giornata.</p>';
     return `<div class="fav" data-i="${i}" role="button" tabindex="0"><button class="rm" aria-label="Rimuovi dai preferiti" title="Rimuovi">×</button><div class="a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>${esc(dn(f[0]))}</div><div class="a"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M14 6l6 6-6 6"/></svg><span class="chip">${esc(dn(f[1]))}</span></div><div class="nxs">${chips}</div></div>`}).join(''):'<p class="empty">Nessun percorso salvato.</p>';
   document.querySelectorAll('.fav').forEach(el=>{el.onclick=e=>{const f=favs[el.dataset.i];if(e.target.closest('.rm')){S.set('favR',favs.filter((x,j)=>j!=el.dataset.i));drawFavs();drawSave();return}st.from=f[0];st.to=f[1];save();$('favScr').hidden=true;render();scrollTo({top:0,behavior:'smooth'})};el.onkeydown=e=>{if(e.key=='Enter')el.click()}});
 }
@@ -281,8 +295,9 @@ function render(){
   for(const [k,el,ph] of [['from','fFrom','Partenza'],['to','fTo','Arrivo']]){const b=$(el);b.classList.toggle('set',!!st[k]);b.querySelector('span').textContent=st[k]?dn(st[k]):ph}
   drawFavs();drawData();drawSave();st.limit=12;search();
 }
-setInterval(()=>{if(D&&!document.hidden){if(RT_URL)pollRT();else{drawFavs();drawData()}}},30000);
-document.addEventListener('visibilitychange',()=>{if(D&&!document.hidden){if(RT_URL)pollRT();else{drawFavs();drawData()}}});
+setInterval(()=>{if(D&&!document.hidden){syncNow();if(RT_URL)pollRT();else{drawFavs();drawData()}}},30000);
+function syncNow(){if(st.manual)return;const n=new Date(),v=hm(n.getHours()*3600+n.getMinutes()*60);if($('when').value!=v)$('when').value=v}
+document.addEventListener('visibilitychange',()=>{if(D&&!document.hidden){syncNow();if(RT_URL)pollRT();else{drawFavs();drawData()}}});
 const save=()=>{S.set('from',st.from);S.set('to',st.to)};
 function status(t){$('status').innerHTML=t||''}
 function openPicker(which){st.which=which;$('pTitle').textContent=which=='from'?'Partenza':'Arrivo';$('q').value='';$('picker').hidden=false;drawRows();setTimeout(()=>$('q').focus(),50)}
@@ -305,7 +320,7 @@ $('tabs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;st.tab=t;[...$('ta
 $('q').oninput=drawRows;$('pBack').onclick=()=>$('picker').hidden=true;
 $('fFrom').onclick=()=>openPicker('from');$('fTo').onclick=()=>openPicker('to');
 $('swap').onclick=()=>{[st.from,st.to]=[st.to,st.from];save();render()};
-$('when').onchange=()=>{st.limit=12;search()};
+$('when').onchange=()=>{st.manual=true;st.limit=12;search()};
 const isFav=()=>S.get('favR',FR).some(x=>x[0]==st.from&&x[1]==st.to);
 function drawSave(){const b=$('saveBtn'),on=isFav();b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.querySelector('span').textContent=on?'Salvato':'Salva'}
 $('saveBtn').onclick=()=>{if(!st.from||!st.to)return;let f=S.get('favR',FR);f=isFav()?f.filter(x=>!(x[0]==st.from&&x[1]==st.to)):[[st.from,st.to],...f];S.set('favR',f);drawSave()};
