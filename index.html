@@ -97,10 +97,12 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 /* niente scorrimento orizzontale: ogni riga resta dentro lo schermo, si scorre solo in verticale */
 body,#favScr,#detail,#picker{touch-action:pan-y}
 main,#favScr,#detail,#picker{overflow-x:hidden}
-/* barra di stato: iOS colora la fascia in alto col colore di sfondo della pagina, quindi lo sfondo è rosso
-   in alto e grigio in basso; il grigio vero lo dipinge il contenuto */
-html{background:var(--blue) linear-gradient(var(--blue) 50%,var(--bg) 50%) fixed}
-body{background:transparent;min-height:100%;display:flex;flex-direction:column}
+body{background:var(--bg);min-height:100%;display:flex;flex-direction:column}
+/* app installata: iOS sfuma la fascia sotto l'orologio; spostiamo logo, titoli e pulsanti un po' più in basso */
+@media (display-mode:standalone){
+  header{padding-top:30px}
+  #favScr .ph,#detail .ph,#picker .ph{padding-top:calc(env(safe-area-inset-top,0px) + 20px)!important;height:calc(80px + env(safe-area-inset-top,0px))!important}
+}
 main{flex:1;width:100%;align-content:start;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
 #favScr,#detail,#picker{background:linear-gradient(var(--blue) 50%,var(--bg) 50%);overscroll-behavior:contain}
 #favScr,#detail{padding-top:0!important;display:flex;flex-direction:column}
