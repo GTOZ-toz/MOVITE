@@ -52,9 +52,42 @@ def convert(path):
     end = feed.get('feed_end_date') or max((c[2] for c in cal), default='')
     return dict(end=end, tp=prefix or '', names=names, pats=pats, trips=trips, cal=cal, ex=ex, **tables)
 
+def feed_start(f):
+    if f.get('start'):
+        return f['start']
+    dates = [c[1] for c in f['cal']] + [e[1] for e in f['ex']]
+    return min(dates) if dates else '00000000'
+
+def merge(new, old, today):
+    """Tiene anche l'orario precedente finché quello nuovo non è in vigore.
+    ACTV a volte pubblica un orario che parte qualche giorno dopo: senza il vecchio,
+    l'app resterebbe senza corse fino alla data di partenza."""
+    new['start'] = feed_start(new)
+    feeds = [new]
+    if new['start'] > today:
+        olds = old if isinstance(old, list) else ([old] if old else [])
+        sig = lambda f: (f.get('tp'), json.dumps(f['cal']))
+        for f in olds:
+            f['start'] = feed_start(f)
+            if sig(f) != sig(new) and f['start'] < new['start'] and f.get('end', '') >= today:
+                feeds.append(f)
+                break
+    return feeds
+
 if __name__ == '__main__':
+    import datetime, os
+    from zoneinfo import ZoneInfo
     aut, nav, out = sys.argv[1:4]
-    data = {'aut': convert(aut), 'nav': convert(nav)}
+    today = datetime.datetime.now(ZoneInfo('Europe/Rome')).strftime('%Y%m%d')
+    old = {}
+    if os.path.exists(out):
+        try:
+            old = json.load(open(out, encoding='utf-8'))
+        except ValueError:
+            old = {}
+    data = {'aut': merge(convert(aut), old.get('aut'), today),
+            'nav': merge(convert(nav), old.get('nav'), today)}
     with open(out, 'w', encoding='utf-8') as f:
         json.dump(data, f, separators=(',', ':'), ensure_ascii=False)
-    print('OK:', len(data['aut']['trips']), 'corse bus,', len(data['nav']['trips']), 'corse battelli')
+    for k, v in data.items():
+        print(k, ', '.join(f"orario dal {f['start']} al {f['end']} ({len(f['trips'])} corse)" for f in v))
