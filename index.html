@@ -94,6 +94,12 @@ main{padding-block:20px 40px;display:grid;gap:16px}
 .status{font-size:13px;color:var(--muted);text-align:center;line-height:1.5}
 .status button{background:none;border:0;color:var(--blue);font:inherit;text-decoration:underline;cursor:pointer}
 @media (prefers-reduced-motion:no-preference){.row,.field{transition:transform .1s}.row:active,.field:active{transform:scale(.98)}}
+/* niente scorrimento orizzontale: ogni riga resta dentro lo schermo */
+html,body{overflow-x:hidden;max-width:100%}
+#favScr,#detail,#picker{overflow-x:hidden;padding-top:0!important}
+#favScr .ph,#detail .ph,#picker .ph{padding-top:env(safe-area-inset-top,0px);height:calc(60px + env(safe-area-inset-top,0px));flex-shrink:0}
+.dwrap>*,.leg,.lh>div,.xfer>div,.stops li>span:last-child{min-width:0}
+.lh .hs,.trip .hs{white-space:normal}.xfer svg,.lh .ln{flex-shrink:0}.stops li>span:last-child{overflow-wrap:anywhere}
 </style>
 
 </head>
